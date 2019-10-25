@@ -63,6 +63,8 @@ function remove(arr, e) {
 }
 let start = grid[0][0]
 let end = grid[cols-1][rows-1]
+start.blocked = false
+end.blocked = false
 
 let openSet = new Array()
 let closeSet = new Array()
