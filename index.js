@@ -8,6 +8,7 @@ let w = width / cols
 let h = height / rows
 let path = new Array()
 let naibhours = new Array()
+let interval
 
 let grid = new Array(cols)
 for (let i = 0; i < cols; i++) {
@@ -25,11 +26,39 @@ for (let i = 0; i < cols; i++) {
     }
 }
 
+function hScore(a, b) {
+    return Math.sqrt(Math.pow((a.i - b.i), 2) + Math.pow((a.j - b.j), 2))
+}
+
+function remove(arr, e) {
+    for (let i = arr.length - 1; i >= 0; i--) {
+        if (arr[i] == e) {
+            arr.splice(i, 1)
+        }
+    }
+}
+
+
+let start = grid[0][0]
+let end = grid[cols - 1][rows - 1]
+start.blocked = false
+end.blocked = false
+
+let openSet = new Array()
+let closeSet = new Array()
+openSet.push(start)
+
+
+
 function draw_grid(t) {
     for (let i = 0; i < cols; i++) {
         for (let j = 0; j < rows; j++) {
             grid[i][j].show(ctx, w, h)
         }
+    }
+    if(!t){
+        start.show(ctx, w, h, 'purple')
+        end.show(ctx, w, h, 'grey')
     }
     if (t) {
         for (let i = 0; i < cols; i++) {
@@ -43,32 +72,15 @@ function draw_grid(t) {
         for (let i = 0; i < closeSet.length; i++) {
             closeSet[i].show(ctx, w, h, 'red')
         }
-        for(let i=0; i<path.length; i++){
+        start.show(ctx, w, h, 'purple')
+        end.show(ctx, w, h, 'grey')
+        for (let i = 0; i < path.length; i++) {
             path[i].show(ctx, w, h, 'blue')
         }
     }
-
 }
 draw_grid()
 
-function hScore(a, b) {
-    return Math.sqrt(Math.pow((a.i - b.i), 2) + Math.pow((a.j - b.j), 2))
-}
-function remove(arr, e) {
-    for (let i = arr.length - 1; i >= 0; i--) {
-        if (arr[i] == e) {
-            arr.splice(i, 1)
-        }
-    }
-}
-let start = grid[0][0]
-let end = grid[cols-1][rows-1]
-start.blocked = false
-end.blocked = false
-
-let openSet = new Array()
-let closeSet = new Array()
-openSet.push(start)
 
 function draw() {
     if (openSet.length > 0) {
@@ -84,7 +96,7 @@ function draw() {
             console.log('Done')
             let temp = end
             path.push(end)
-            while(temp.previous){
+            while (temp.previous) {
                 path.push(temp.previous)
                 temp = temp.previous
             }
@@ -111,26 +123,39 @@ function draw() {
                 }
             }
         }
-        
+
     } else {
         // no solution
     }
     draw_grid(true)
 }
-let interval = setInterval(() => draw(), 21)
 
-let tf = false
-canvas.onclick = e => block_or_unblock(e)
-canvas.onmousemove = e => {
-    if (tf) {
-        block_or_unblock(e)
-    }
+document.querySelector('.start').onclick = () => {
+    path = new Array()
+    start.blocked = false
+    end.blocked = false
+    openSet = new Array()
+    closeSet = new Array()
+    openSet.push(start)
+    interval = setInterval(()=>draw(), 21)
 }
-// canvas.onmousedown = () => tf = true
-// canvas.onmouseup = () => tf = false
-// canvas.onmouseout = () => tf = false
+
+let draggable = false
+let dragStart = false
+let dragEnd = false
+canvas.onclick = e => block_or_unblock(e)
 
 function block_or_unblock(e) {
+    let selected = whichcell(e)
+    if (selected.blocked) {
+        selected.blocked = false
+    } else {
+        selected.blocked = true
+    }
+    draw_grid()
+}
+
+function whichcell(e) {
     let x = e.offsetX
     let y = e.offsetY
     let selected
@@ -148,16 +173,35 @@ function block_or_unblock(e) {
             }
         }
     }
-    // console.log(selectI, selectJ)
     selected = grid[selectI][selectJ]
-    if (!tf) {
-        if (selected.blocked) {
-            selected.blocked = false
-        } else {
-            selected.blocked = true
-        }
-    } else {
-        selected.blocked = true
+    return selected
+}
+
+canvas.onmousedown = () => draggable = true
+canvas.onmouseup = e => {
+    if (draggable & dragStart) {
+        let selected = whichcell(e)
+        start = selected
     }
-    draw_grid()
+    if (draggable & dragEnd) {
+        let selected = whichcell(e)
+        end = selected
+    }
+    dragStart = false
+    dragEnd = false
+    draw_grid(true)
+}
+canvas.onmouseout = () => draggable = false
+canvas.onmousemove = e => {
+    let x = e.offsetX
+    let y = e.offsetY
+    let selected = whichcell(e)
+    if (selected == start) {
+        dragStart = true
+        dragEnd = false
+    }
+    if (selected == end) {
+        dragEnd = true
+        dragStart = false
+    }
 }
