@@ -56,7 +56,7 @@ function draw_grid(t) {
             grid[i][j].show(ctx, w, h)
         }
     }
-    if(!t){
+    if (!t) {
         start.show(ctx, w, h, 'purple')
         end.show(ctx, w, h, 'grey')
     }
@@ -72,11 +72,11 @@ function draw_grid(t) {
         for (let i = 0; i < closeSet.length; i++) {
             closeSet[i].show(ctx, w, h, 'red')
         }
-        start.show(ctx, w, h, 'purple')
-        end.show(ctx, w, h, 'grey')
         for (let i = 0; i < path.length; i++) {
             path[i].show(ctx, w, h, 'blue')
         }
+        start.show(ctx, w, h, 'rgb(65,10,209)')
+        end.show(ctx, w, h, 'rgb(100,100,211)')
     }
 }
 draw_grid()
@@ -134,10 +134,12 @@ document.querySelector('.start').onclick = () => {
     path = new Array()
     start.blocked = false
     end.blocked = false
+    start.previous = false
+    end.previous = false
     openSet = new Array()
     closeSet = new Array()
     openSet.push(start)
-    interval = setInterval(()=>draw(), 21)
+    interval = setInterval(() => draw(), 21)
 }
 
 let draggable = false
@@ -189,6 +191,7 @@ canvas.onmouseup = e => {
     }
     dragStart = false
     dragEnd = false
+    draggable = false
     draw_grid(true)
 }
 canvas.onmouseout = () => draggable = false
@@ -196,11 +199,11 @@ canvas.onmousemove = e => {
     let x = e.offsetX
     let y = e.offsetY
     let selected = whichcell(e)
-    if (selected == start) {
+    if (draggable & selected == start) {
         dragStart = true
         dragEnd = false
     }
-    if (selected == end) {
+    if (draggable & selected == end) {
         dragEnd = true
         dragStart = false
     }
