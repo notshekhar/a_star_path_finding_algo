@@ -1,3 +1,19 @@
+function Interval(fn, time) {
+    var timer = false;
+    this.start = function () {
+        if (!this.isRunning())
+            timer = setInterval(fn, time);
+    };
+    this.stop = function () {
+        clearInterval(timer);
+        timer = false;
+    };
+    this.isRunning = function () {
+        return timer !== false;
+    };
+}
+
+
 let canvas = document.querySelector('canvas')
 let ctx = canvas.getContext('2d')
 let width = canvas.width
@@ -8,7 +24,7 @@ let w = width / cols
 let h = height / rows
 let path = new Array()
 let naibhours = new Array()
-let interval
+let interval = new Interval(draw, 21)
 
 let grid = new Array(cols)
 for (let i = 0; i < cols; i++) {
@@ -20,11 +36,15 @@ for (let i = 0; i < cols; i++) {
         grid[i][j] = new cell(i, j)
     }
 }
-for (let i = 0; i < cols; i++) {
-    for (let j = 0; j < rows; j++) {
-        grid[i][j].addneighbors(grid)
+
+function addneighbors() {
+    for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
+            grid[i][j].addneighbors(grid)
+        }
     }
 }
+addneighbors()
 
 function hScore(a, b) {
     return Math.sqrt(Math.pow((a.i - b.i), 2) + Math.pow((a.j - b.j), 2))
@@ -100,7 +120,7 @@ function draw() {
                 path.push(temp.previous)
                 temp = temp.previous
             }
-            clearInterval(interval)
+            interval.stop()
         }
         remove(openSet, current)
         closeSet.push(current)
@@ -130,16 +150,23 @@ function draw() {
     draw_grid(true)
 }
 
-document.querySelector('.start').onclick = () => {
+
+function startover() {
     path = new Array()
     start.blocked = false
     end.blocked = false
     start.previous = false
     end.previous = false
+    addneighbors()
     openSet = new Array()
     closeSet = new Array()
     openSet.push(start)
-    interval = setInterval(() => draw(), 21)
+}
+document.querySelector('.start').onclick = () => {
+    if (!interval.isRunning()) {
+        startover()
+        interval.start()
+    }
 }
 
 let draggable = false
@@ -184,10 +211,12 @@ canvas.onmouseup = e => {
     if (draggable & dragStart) {
         let selected = whichcell(e)
         start = selected
+        startover()
     }
     if (draggable & dragEnd) {
         let selected = whichcell(e)
         end = selected
+        startover()
     }
     dragStart = false
     dragEnd = false
